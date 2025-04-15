@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String   @unique
+  body      String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  published Boolean? @default(false)
+  updatedAt DateTime
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id         Int     @id @default(autoincrement())
+  firstname  String
+  lastname   String
+  username   String
+  email      String  @unique
+  password   String
+  phone      String?
+  website    String?
+  imgprofile String?
+  isVerified Boolean @default(false)
+  Post       Post[]
+}

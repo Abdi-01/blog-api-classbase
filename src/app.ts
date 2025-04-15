@@ -12,6 +12,7 @@ class App {
     this.app = express();
     this.configure();
     this.route();
+    this.errorHandler();
   }
 
   private configure(): void {
@@ -27,6 +28,19 @@ class App {
     });
 
     this.app.use("/auth", authRouter.getRouter());
+  }
+
+  private errorHandler(): void {
+    this.app.use(
+      (error: any, req: Request, res: Response, next: NextFunction) => {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: "Server Error",
+          error,
+        });
+      }
+    );
   }
 
   public start(): void {

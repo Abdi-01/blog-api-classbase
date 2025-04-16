@@ -1,6 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { genSalt, hash } from "bcrypt";
+import { hashPassword } from "../utils/hashPassword";
+import { sign } from "jsonwebtoken";
+import { createToken } from "../utils/createToken";
+import { transporter } from "../config/nodemailer";
 
 class AuthController {
   async register(
@@ -23,11 +27,22 @@ class AuthController {
         });
       }
 
-      const salt = await genSalt(10);
-      const hashPassword = await hash(req.body.password, salt);
+      const newPasword = await hashPassword(req.body.password);
 
       const regis = await prisma.user.create({
-        data: { ...req.body, password: hashPassword },
+        data: { ...req.body, password: newPasword },
+      });
+
+      const token = createToken({ id: regis.id, email: regis.email });
+
+      await transporter.sendMail({
+        from: process.env.MAIL_SENDER,
+        to: req.body.email,
+        subject: "Verify Registration Account",
+        html: `
+        <h1>Thank you for register account ${req.body.email}</h1>
+        <a href="${process.env.FE_URL}/verify?t=${token}">Verify Now</a>
+        `,
       });
 
       return res.status(200).send({

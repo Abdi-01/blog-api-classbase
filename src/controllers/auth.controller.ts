@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
-import { genSalt, hash } from "bcrypt";
+import { compare, genSalt, hash } from "bcrypt";
 import { hashPassword } from "../utils/hashPassword";
 import { sign } from "jsonwebtoken";
 import { createToken } from "../utils/createToken";
@@ -54,17 +54,70 @@ class AuthController {
     }
   }
 
-  async login(req: Request, res: Response): Promise<any> {
+  async login(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-      //
+      const user = await prisma.user.findUnique({
+        where: {
+          email: req.body.email,
+        },
+      });
+
+      if (!user) {
+        throw "Account is not exist";
+      }
+
+      // Check password
+      const comparePass = await compare(req.body.password, user.password);
+
+      if (!comparePass) {
+        throw "Password is wrong";
+      }
+
+      const token = createToken(
+        { id: user.id, isVerified: user.isVerified },
+        "24h"
+      );
+
+      return res.status(200).send({
+        firstname: user.firstname,
+        lastname: user.lastname,
+        username: user.username,
+        email: user.email,
+        isVerified: user.isVerified,
+        token,
+      });
     } catch (error) {
-      console.log(error);
+      next(error);
     }
   }
 
-  async keepLogin(req: Request, res: Response): Promise<any> {
+  async keepLogin(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<any> {
     try {
-      //
+      const user = await prisma.user.findUnique({
+        where: { id: res.locals.data.id },
+      });
+
+      if (!user) {
+        throw "Account is not exist";
+      }
+
+      const token = createToken(
+        { id: user.id, isVerified: user.isVerified },
+        "24h"
+      );
+
+      return res.status(200).send({
+        firstname: user.firstname,
+        lastname: user.lastname,
+        username: user.username,
+        email: user.email,
+        isVerified: user.isVerified,
+        token,
+      });
     } catch (error) {
       console.log(error);
     }

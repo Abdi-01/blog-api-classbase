@@ -19,12 +19,9 @@ class AuthRouter {
     this.route.post("/register", regisValidation, this.authController.register);
     this.route.post("/login", this.authController.login);
 
-    // this.route.use(this.tokenVerifier.verifyToken);
-    this.route.get(
-      "/keep-auth",
-      this.tokenVerifier.verifyToken,
-      this.authController.keepLogin
-    );
+    this.route.use(this.tokenVerifier.verifyToken);
+
+    this.route.get("/keep-auth", this.authController.keepLogin);
   }
 
   public getRouter(): Router {

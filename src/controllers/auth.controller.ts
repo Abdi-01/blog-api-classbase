@@ -5,6 +5,7 @@ import { hashPassword } from "../utils/hashPassword";
 import { sign } from "jsonwebtoken";
 import { createToken } from "../utils/createToken";
 import { transporter } from "../config/nodemailer";
+import { cloudinaryUpload } from "../config/cloudinary";
 
 class AuthController {
   async register(
@@ -120,6 +121,36 @@ class AuthController {
       });
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  async updateProfileImg(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<any> {
+    try {
+      if (!req.file) {
+        throw "No file exist";
+      }
+
+      const upload = await cloudinaryUpload(req.file);
+
+      await prisma.user.update({
+        data: {
+          imgprofile: upload.secure_url,
+        },
+        where: {
+          id: res.locals.data.id,
+        },
+      });
+
+      return res.status(200).send({
+        success: true,
+        message: "Update profile image success",
+      });
+    } catch (error) {
+      next(error);
     }
   }
 }

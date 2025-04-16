@@ -2,6 +2,7 @@ import { Router } from "express";
 import AuthController from "../controllers/auth.controller";
 import { regisValidation } from "../middleware/validation/auth";
 import TokenVerifier from "../middleware/verifyToken";
+import { uploaderMemory } from "../middleware/uploader";
 
 class AuthRouter {
   private route: Router;
@@ -22,6 +23,11 @@ class AuthRouter {
     this.route.use(this.tokenVerifier.verifyToken);
 
     this.route.get("/keep-auth", this.authController.keepLogin);
+    this.route.patch(
+      "/profile-img",
+      uploaderMemory().single("img"),
+      this.authController.updateProfileImg
+    );
   }
 
   public getRouter(): Router {

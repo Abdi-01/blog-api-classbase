@@ -3,6 +3,8 @@ dotenv.config();
 import cors from "cors";
 import express, { Request, Response, NextFunction, Application } from "express";
 import AuthRouter from "./routers/auth.router";
+import redisClient from "./config/redis";
+import ArticleRouter from "./routers/article.router";
 
 const PORT = process.env.PORT || 8083;
 class App {
@@ -23,11 +25,13 @@ class App {
   private route(): void {
     // Config route type here
     const authRouter = new AuthRouter();
+    const articleRouter = new ArticleRouter();
     this.app.get("/", (req: Request, res: Response) => {
       res.status(200).send("<h1>CLASSBASE API</h1>");
     });
 
     this.app.use("/auth", authRouter.getRouter());
+    this.app.use("/article", articleRouter.getRouter());
   }
 
   private errorHandler(): void {
@@ -43,7 +47,8 @@ class App {
     );
   }
 
-  public start(): void {
+  public async start(): Promise<void> {
+    await redisClient.connect();
     this.app.listen(PORT, () => {
       console.log("API CLASSBASE RUNNING", PORT);
     });
